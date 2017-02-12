@@ -10,11 +10,80 @@
          online at your node.js address under /socket.io/socket.io.js 
          You can disable that on the server if desired
     -->
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+    
+    <script type="text/babel">
+        const connectSocket = (e) => {
+            const chat = document.querySelector("#chat");
+            const socket = io.connect();
+            
+            var textArea = document.querySelector("#chat");
+            const appendMessage = (data) =>
+            {
+                textArea.innerHTML+=formatForChat(data);
+                textArea.scrollTop = textArea.scrollHeight;
+            }
+            
+            socket.on('connect',()=> {
+                console.log('connecting');
+                
+                let user = document.querySelector("#username").value;
+                
+                if(!user) {
+                    user = 'unknown';
+                }
+                
+                socket.emit('join', {name : user});
+            });
+            
+            const send = document.querySelector("#send");
+            const message = document.querySelector("#message");
+            
+            if(!send.onclick)
+            {
+                send.onclick = (e) => {
+                    var msg = message.value;
+                    if(msg!=""){
+                        var msgObj = {msg: msg};
+                        socket.emit('msg', {msg: msg});
+                        appendMessage(msgObj);
+                        message.value = "";
+                    }
+                }
+            }
+            
+            
+            socket.on('msg', (data) => {
+                appendMessage(data);
+            });
+        };
+
+
+        const formatForChat = (data) => {
+            console.dir(data);
+            if(data.isServer)
+            {
+                return "<i>"+data.msg+"</i><br>";
+            }
+            if(data.name==undefined)
+            {
+                data.name = "You";
+            }
+            return "<b>"+data.name+"</b>: "+data.msg+"<br>";
+        };
+
+        const init = () => {
+            const connect = document.querySelector("#connect");
+            connect.addEventListener('click', connectSocket);
+        };
+    
+        window.onload = init();
+    </script>
 	<style>
-		textarea {
-			display: block;
+		#chat {
 			background-color: #EEEEEE;
+            overflow:auto; width: 300px; height:300px;
 		}
 	</style>
 </head>
@@ -26,7 +95,6 @@
 	<label for="message">Message:</label>
 	<input id="message" name="message" type="text"/>
 	<input id="send" type="button" value="send" />
-	
-	<textarea id="chat" rows="20" cols="40" readonly> </textarea>
+	<div id="chat"></div>
 </body>
 </html>
