@@ -94,12 +94,12 @@ const onMsg = (sock) => {
 
 const onDisconnect = (sock) => {
   const socket = sock;
-  console.log(`${users[socket]} left the server`);
+  console.log(`${socket.name} left the server`);
 
           // announcement to everyone in the room
   const response = {
     name: 'server',
-    msg: `${users[socket]} has left the room.`,
+    msg: `${socket.name} has left the room.`,
     isServer: true,
   };
   socket.broadcast.to('room1').emit('msg', response);
