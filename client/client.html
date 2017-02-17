@@ -47,7 +47,7 @@
                     if(msg!=""){
                         var msgObj = {msg: msg};
                         socket.emit('msg', {msg: msg});
-                        appendMessage(msgObj);
+                        //appendMessage(msgObj);
                         message.value = "";
                     }
                 }
@@ -66,7 +66,7 @@
             {
                 return "<i>"+data.msg+"</i><br>";
             }
-            if(data.name==undefined)
+            if(data.fromSelf===true)
             {
                 data.name = "You";
             }

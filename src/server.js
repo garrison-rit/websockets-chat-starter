@@ -22,35 +22,37 @@ const io = socketio(app);
 
 const users = {};
 
+let lastSent = '/echo';
+
 const onJoined = (sock) => {
   const socket = sock;
 
   socket.on('join', (data) => {
-      users[data.name] = socket;// data;
-      console.dir(data);
+    users[data.name] = socket;// data;
+    console.dir(data);
             // message back to new user
-      const joinMsg = {
-        name: 'server',
-        msg: `There are ${Object.keys(users).length} users online`,
-        isServer: true,
-      };
+    const joinMsg = {
+      name: 'server',
+      msg: `There are ${Object.keys(users).length} users online`,
+      isServer: true,
+    };
 
-      socket.name = data.name;
-      socket.emit('msg', joinMsg);
+    socket.name = data.name;
+    socket.emit('msg', joinMsg);
 
-      socket.join('room1');
+    socket.join('room1');
 
             // announcement to everyone in the room
-      const response = {
-        name: 'server',
-        msg: `${data.name} has joined the room.`,
-        isServer: true,
-      };
-      socket.broadcast.to('room1').emit('msg', response);
+    const response = {
+      name: 'server',
+      msg: `${data.name} has joined the room.`,
+      isServer: true,
+    };
+    socket.broadcast.to('room1').emit('msg', response);
 
-      console.log(`${data.name} joined`);
+    console.log(`${data.name} joined`);
             // success message back to new user
-      socket.emit('msg', { name: 'server', msg: 'You joined the room', isServer: true });
+    socket.emit('msg', { name: 'server', msg: 'You joined the room', isServer: true });
   });
 };
 
@@ -58,20 +60,29 @@ const onMsg = (sock) => {
   const socket = sock;
 
   socket.on('msg', (data) => {
-    const msg = data.msg;
+    let msg = data.msg;
     if (msg !== '') {
+      if (msg === '/shrug') {
+        msg = '¯\\_(ツ)_/¯';
+      }
+      if (msg === '/echo') {
+        msg = lastSent;
+      } else {
+        lastSent = msg;
+      }
       console.dir(data);
         // message back to new user
       const toSend = {
         name: socket.name,
-        msg: msg,
+        msg,
       };
         // socket.emit('msg', sentMsg);
 
         // announcement to everyone in the room
       socket.broadcast.to('room1').emit('msg', toSend);
 
-      console.dir(toSend);
+      toSend.fromSelf = true;
+      socket.emit('msg', toSend);
         // success message back to new user
         // socket.emit('msg', { name: 'server', msg: 'You joined the room', isServer:true });
     }
@@ -83,17 +94,17 @@ const onMsg = (sock) => {
 
 const onDisconnect = (sock) => {
   const socket = sock;
-    console.log(`${users[socket]} left the server`);
+  console.log(`${users[socket]} left the server`);
 
           // announcement to everyone in the room
-    const response = {
-      name: 'server',
-      msg: `${users[socket]} has left the room.`,
-      isServer: true,
-    };
-    socket.broadcast.to('room1').emit('msg', response);
+  const response = {
+    name: 'server',
+    msg: `${users[socket]} has left the room.`,
+    isServer: true,
+  };
+  socket.broadcast.to('room1').emit('msg', response);
 
-    delete users[socket.name];
+  delete users[socket.name];
 };
 
 io.sockets.on('connection', (socket) => {
